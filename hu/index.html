@@ -77,7 +77,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .lang button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 
 .scene{position:relative}
-.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;contain:layout paint}
+#pA,#pO,#heroGroup,#heroCopy,.cap,#visual,#spec{will-change:transform,opacity}
 
 /* hero */
 #hero{height:260vh}
@@ -438,9 +439,12 @@ document.getElementById('hu').onclick=()=>go('hu');document.getElementById('en')
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v)),lerp=(a,b,t)=>a+(b-a)*t;
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2,easeIn=t=>t*t*t;
-const prog=el=>{const r=el.getBoundingClientRect(),t=r.height-innerHeight;return t>0?clamp(-r.top/t):0};
+/* stable viewport height = the sticky stage (100svh); innerHeight changes while the phone's address bar slides, which made scenes jump */
+const stageRef=document.querySelector('.stage');let VH=stageRef?stageRef.clientHeight:innerHeight,vhW=innerWidth;
+addEventListener('resize',()=>{if(innerWidth!==vhW||!VH){vhW=innerWidth;VH=stageRef?stageRef.clientHeight:innerHeight}});
+const prog=el=>{const r=el.getBoundingClientRect(),t=r.height-VH;return t>0?clamp(-r.top/t):0};
 let lenis=null;
-if(!RM&&typeof Lenis!=='undefined'){try{lenis=new Lenis({duration:1.25,smoothWheel:true});
+if(!RM&&typeof Lenis!=='undefined'&&!matchMedia('(pointer: coarse)').matches){try{lenis=new Lenis({duration:1.25,smoothWheel:true});
   document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const t=document.querySelector(a.getAttribute('href'));if(t){e.preventDefault();lenis.scrollTo(t)}}));}catch(e){lenis=null}}
 
 /* hero: A and O part and fly past the viewer */
@@ -456,8 +460,8 @@ function drawHero(p){
   nav.classList.toggle('solid',p>.6||hero.getBoundingClientRect().bottom<innerHeight);
 }
 const mapEl=document.querySelector('.map-wrap'),routes=document.querySelectorAll('.route'),mapTimes=document.querySelectorAll('.mapTime');
-function drawMap(){const r=mapEl.getBoundingClientRect(),h=innerHeight;const p=clamp((h*.85-r.top)/(r.height*.7));routes.forEach(x=>x.style.strokeDashoffset=String(1-ease(p)));mapTimes.forEach(x=>x.setAttribute('opacity',String(clamp((p-.6)/.3))))}
-function drawStmt(){const r=st.getBoundingClientRect();const p=clamp((innerHeight*.85-r.top)/(r.height+innerHeight*.45));const n=p*ws.length;ws.forEach((w,i)=>w.style.opacity=String(.14+.86*clamp(n-i)))}
+function drawMap(){const r=mapEl.getBoundingClientRect(),h=VH;const p=clamp((h*.85-r.top)/(r.height*.7));routes.forEach(x=>x.style.strokeDashoffset=String(1-ease(p)));mapTimes.forEach(x=>x.setAttribute('opacity',String(clamp((p-.6)/.3))))}
+function drawStmt(){const r=st.getBoundingClientRect();const p=clamp((VH*.85-r.top)/(r.height+VH*.45));const n=p*ws.length;ws.forEach((w,i)=>w.style.opacity=String(.14+.86*clamp(n-i)))}
 
 /* Project 01 drawing */
 const C={ink:'#141414',clay:'#B5573A',concrete:'#B9B6B0',sand:'#D9CBB3',teal:'#2F6F6A'};
